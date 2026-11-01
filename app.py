@@ -18,9 +18,10 @@ if "credits" not in st.session_state:
 if "is_pro" not in st.session_state:
     st.session_state.is_pro = False
 
-# Automatische Freischaltung, wenn Kunde nach Kauf über ?pro=SCHRUMPF2026 zurückkommt
+# Automatische Freischaltung, wenn Kunde nach Kauf über ?pro=SCHRUMPF2026 zurückkommt + URL-Tarnkappe
 if st.query_params.get("pro") == PRO_CODE:
     st.session_state.is_pro = True
+    st.query_params.clear()
 
 # --- 2. SIDEBAR: SPRACHE, KONTO & UPGRADE ---
 with st.sidebar:
@@ -41,7 +42,7 @@ with st.sidebar:
             else "Get **PRO** for unlimited PDFs (**5 € / year**)."
         )
         
-        # Bezahl-Button (Stripe & PayPal) - KORRIGIERT!
+        # Bezahl-Button (Stripe & PayPal)
         st.link_button(
             "🚀 PRO-Pass holen (5 €) – PayPal, Karte & Apple Pay" if de else "🚀 Get PRO Pass (5 €) – PayPal, Card & Apple Pay",
             STRIPE_LINK,
