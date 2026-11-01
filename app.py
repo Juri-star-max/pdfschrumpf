@@ -6,11 +6,22 @@ import io, os, tempfile
 
 st.set_page_config(page_title="PDFSchrumpf", page_icon="📉", layout="centered")
 
-# --- 1. CREDITS & ABO-LOGIK (Session State) ---
+# =====================================================================
+# --- HIER DEINE BEZAHL-LINKS & PRO-CODE EINTRAGEN ---
+# =====================================================================
+PRO_CODE = "SCHRUMPF2026"
+STRIPE_LINK = "https://buy.stripe.com/DEIN_STRIPE_LINK"  # Später eintragen
+PAYPAL_LINK = "https://paypal.me/DEIN_PAYPAL_NAME/5"     # Später eintragen
+
+# --- 1. CREDITS & ABO-LOGIK (Session State + Auto-Freischaltung per Link) ---
 if "credits" not in st.session_state:
     st.session_state.credits = 3
 if "is_pro" not in st.session_state:
     st.session_state.is_pro = False
+
+# Automatische Freischaltung, wenn Kunde nach Kauf über ?pro=SCHRUMPF2026 zurückkommt
+if st.query_params.get("pro") == PRO_CODE:
+    st.session_state.is_pro = True
 
 # --- 2. SIDEBAR: SPRACHE, KONTO & UPGRADE ---
 with st.sidebar:
@@ -27,12 +38,37 @@ with st.sidebar:
             else f"Free tries left: **{st.session_state.credits} / 3**"
         )
         st.write(
-            "Hol dir PRO für unbegrenzte PDFs (**5 € / Jahr**)." if de 
-            else "Get PRO for unlimited PDFs (**5 € / year**)."
+            "Hol dir **PRO** für unbegrenzte PDFs (**5 € / Jahr**)." if de 
+            else "Get **PRO** for unlimited PDFs (**5 € / year**)."
         )
-        if st.button("🚀 Jetzt auf PRO upgraden (Simuliert)" if de else "🚀 Upgrade to PRO (Simulated)"):
-            st.session_state.is_pro = True
-            st.rerun()
+        
+        # Bezahl-Buttons (Stripe & PayPal)
+        st.link_button(
+            "💳 PRO holen – Karte / Apple Pay (5 €)" if de else "💳 Get PRO – Card / Apple Pay (5 €)",
+            STRIPE_LINK,
+            type="primary",
+            use_container_width=True
+        )
+        st.link_button(
+            "🅿️ Mit PayPal zahlen (5 €)" if de else "🅿️ Pay with PayPal (5 €)",
+            PAYPAL_LINK,
+            use_container_width=True
+        )
+        
+        st.markdown("---")
+        # Lizenzschlüssel-Eingabe für bestehende Käufer
+        st.subheader("🔑 Bereits gekauft?" if de else "🔑 Already purchased?")
+        code_input = st.text_input(
+            "PRO-Code eingeben:" if de else "Enter PRO code:",
+            type="password",
+            placeholder="z.B. SCHRUMPF..." if de else "e.g. SCHRUMPF..."
+        )
+        if st.button("Freischalten" if de else "Unlock", use_container_width=True):
+            if code_input.strip().upper() == PRO_CODE:
+                st.session_state.is_pro = True
+                st.rerun()
+            else:
+                st.error("❌ Ungültiger Code" if de else "❌ Invalid code")
 
 def check_limit():
     if not st.session_state.is_pro and st.session_state.credits <= 0:
@@ -179,16 +215,17 @@ with tab1:
             )
 
             st.markdown(f"""
-            <div style="display:flex; align-items:center; justify-content:center; gap:20px; margin-top:15px;">
-                <div style="position:relative; width:90px; height:90px; border-radius:50%; background:conic-gradient(#e5322d {saved_pct}%, #e0e0e0 0); display:flex; align-items:center; justify-content:center;">
-                    <div style="width:72px; height:72px; border-radius:50%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1;">
-                        <span style="font-size:20px; font-weight:bold; color:#222;">{saved_pct}%</span>
-                        <span style="font-size:9px; color:#666;">{lbl_saved}</span>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 25px; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px;">
+                <div style="width: 110px; height: 110px; border-radius: 50%; background: conic-gradient(#e63946 {saved_pct * 3.6}deg, #e0e0e0 0deg); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <div style="width: 82px; height: 82px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;">
+                        <span style="font-size: 22px; font-weight: bold; color: #1d3557;">{saved_pct}%</span>
+                        <span style="font-size: 10px; color: #6c757d;">{lbl_saved}</span>
                     </div>
                 </div>
-                <div>
-                    <div style="font-size:16px; color:#555;">{txt_smaller} ({orig_mb:.2f} MB ➔ {new_mb:.2f} MB)</div>
-                    <div style="font-size:14px; color:#2e7d32; margin-top:4px;">{txt_tip}</div>
+                <div style="font-size: 16px; color: #333;">
+                    {txt_smaller}<br>
+                    <span style="color: #666; font-size: 14px;">{orig_mb:.2f} MB ➔ <b>{new_mb:.2f} MB</b></span><br>
+                    <span style="color: #1d3557; font-size: 13px;">{txt_tip}</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -223,7 +260,6 @@ with tab4:
                     os.remove(tmp_path)
                     new_kb = len(res_text.encode("utf-8")) / 1024
                     use_credit()
-
                 st.success(
                     f"✅ Fertig! Von **{orig_kb:.1f} KB** auf **{new_kb:.1f} KB** reinen KI-Text reduziert." if de
                     else f"✅ Done! Reduced from **{orig_kb:.1f} KB** to **{new_kb:.1f} KB** of pure AI text."
@@ -288,3 +324,46 @@ with tab3:
                 "application/pdf", 
                 type="primary"
             )
+
+# --- 4. FOOTER: DATENSCHUTZ & IMPRESSUM ---
+st.markdown("---")
+with st.expander("🔒 Datenschutz & Impressum (100% DSGVO-konform)" if de else "🔒 Privacy & Legal Notice (100% GDPR compliant)"):
+    if de:
+        st.markdown("""
+        **🛡️ Datenschutz-Garantie: Deine Dateien gehören dir!**
+        * **Keine Speicherung:** Alle hochgeladenen PDFs und Dokumente werden ausschließlich kurzzeitig im Arbeitsspeicher (RAM) verarbeitet und **sofort nach der Umwandlung automatisch gelöscht**.
+        * **Kein KI-Training:** Deine Dokumente werden zu keinem Zeitpunkt gespeichert, eingesehen oder für das Training von KI-Modellen verwendet.
+        * **Zahlungsabwicklung:** Bei einem PRO-Upgrade erfolgt die Zahlungsabwicklung sicher über externe Zahlungsdienstleister (PayPal / Stripe).
+
+        ---
+        **Impressum (Angaben gemäß § 5 DDG)**  
+        Jurij Weisenstein – JW Consulting  
+        Seckbacher Landstraße 5, 60389 Frankfurt am Main  
+
+        **Kontakt:**  
+        E-Mail: info@weisenstein-consulting.de  
+
+        **Umsatzsteuer-ID:**  
+        Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz: **DE359638041**  
+
+        **Verbraucherstreitbeilegung / Universalschlichtungsstelle:**  
+        Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+        """)
+    else:
+        st.markdown("""
+        **🛡️ Privacy Guarantee: Your files belong to you!**
+        * **Zero Storage:** All uploaded PDFs and documents are processed exclusively in temporary memory (RAM) and are **automatically deleted immediately after conversion**.
+        * **No AI Training:** Your documents are never stored, viewed, or used to train AI models.
+        * **Payment Processing:** PRO upgrades are securely processed via external payment providers (PayPal / Stripe).
+
+        ---
+        **Legal Notice (according to § 5 DDG)**  
+        Jurij Weisenstein – JW Consulting  
+        Seckbacher Landstraße 5, 60389 Frankfurt am Main, Germany  
+
+        **Contact:**  
+        Email: info@weisenstein-consulting.de  
+
+        **VAT ID:** DE359638041  
+        **Dispute Resolution:** We are not willing or obliged to participate in dispute resolution proceedings before a consumer arbitration board.
+        """)
