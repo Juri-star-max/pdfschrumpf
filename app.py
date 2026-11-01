@@ -10,8 +10,7 @@ st.set_page_config(page_title="PDFSchrumpf", page_icon="📉", layout="centered"
 # --- HIER DEINE BEZAHL-LINKS & PRO-CODE EINTRAGEN ---
 # =====================================================================
 PRO_CODE = "SCHRUMPF2026"
-STRIPE_LINK = "https://buy.stripe.com/28E6oIdVGaeL5m8bd8awo00"  # Später eintragen
-
+STRIPE_LINK = "https://buy.stripe.com/28E6oIdVGaeL5m8bd8awo00"
 
 # --- 1. CREDITS & ABO-LOGIK (Session State + Auto-Freischaltung per Link) ---
 if "credits" not in st.session_state:
@@ -42,14 +41,13 @@ with st.sidebar:
             else "Get **PRO** for unlimited PDFs (**5 € / year**)."
         )
         
-        # Bezahl-Buttons (Stripe & PayPal)
+        # Bezahl-Button (Stripe inkl. PayPal, Karte & Apple Pay)
         st.link_button(
-            "💳 PRO holen – Karte / Apple Pay (5 €)" if de else "💳 Get PRO – Card / Apple Pay (5 €)",
+            "🚀 PRO-Pass holen (5 €) – PayPal, Karte & Apple Pay" if de else "🚀 Get PRO Pass (5 €) – PayPal, Card & Apple Pay",
             STRIPE_LINK,
             type="primary",
             use_container_width=True
         )
-      
         
         st.markdown("---")
         # Lizenzschlüssel-Eingabe für bestehende Käufer
@@ -97,6 +95,7 @@ with tab1:
         orig_mb = len(orig_bytes) / (1024 * 1024)
         base_name = f.name.rsplit(".", 1)[0]
         new_filename = f"{base_name}_geschrumpft.pdf" if de else f"{base_name}_compressed.pdf"
+        md_filename = f"{base_name}_KI_Version.md" if de else f"{base_name}_AI_version.md"
 
         col_left, col_right = st.columns([1, 1])
 
@@ -173,7 +172,6 @@ with tab1:
                 md_converter = MarkItDown()
                 md_text = md_converter.convert(tmp_path).text_content
                 os.remove(tmp_path)
-                md_filename = f"{base_name}_KI_Version.md" if de else f"{base_name}_AI_Version.md"
 
                 new_mb = len(out_bytes) / (1024 * 1024)
                 md_kb = len(md_text.encode("utf-8")) / 1024
@@ -261,15 +259,13 @@ with tab4:
                     else f"✅ Done! Reduced from **{orig_kb:.1f} KB** to **{new_kb:.1f} KB** of pure AI text."
                 )
                 st.download_button(
-                    f"⬇️ KI-Version herunterladen ({new_kb:.1f} KB)" if de else f"⬇️ Download AI version ({new_kb:.1f} KB)",
+                    f"⬇️ Download KI-Datei (.md) ({new_kb:.1f} KB)" if de else f"⬇️ Download AI file (.md) ({new_kb:.1f} KB)",
                     res_text,
-                    f"{base_md}_KI_Version.md" if de else f"{base_md}_AI_Version.md",
+                    f"{base_md}_KI.md" if de else f"{base_md}_AI.md",
                     mime="text/markdown",
                     type="primary",
                     use_container_width=True
                 )
-                with st.expander("🔍 Vorschau des KI-Textes ansehen" if de else "🔍 Preview AI text"):
-                    st.text_area("Inhalt" if de else "Content", res_text, height=200)
 
 # TAB 2: ZUSAMMENFÜGEN
 with tab2:
