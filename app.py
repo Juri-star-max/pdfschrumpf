@@ -314,7 +314,7 @@ with tab3:
 
 # --- 4. FOOTER: DATENSCHUTZ & IMPRESSUM ---
 st.markdown("---")
-with st.expander("🔒 Datenschutz & Impressum (100% DSGVO-konform)" if de else "🔒 Privacy & Legal Notice (100% GDPR compliant)"):
+with st.expander("🔒 Datenschutz & Impressum (keine Speicherung deiner Dateien)" if de else "🔒 Privacy & Legal Notice (your files are not stored)"):
     if de:
         st.markdown("""
         **🛡️ Datenschutz-Garantie: Deine Dateien gehören dir!**
