@@ -41,7 +41,7 @@ with st.sidebar:
             else "Get **PRO** for unlimited PDFs (**5 € / year**)."
         )
         
-        # Bezahl-Button (Stripe inkl. PayPal, Karte & Apple Pay)
+        # Bezahl-Button (Stripe & PayPal) - KORRIGIERT!
         st.link_button(
             "🚀 PRO-Pass holen (5 €) – PayPal, Karte & Apple Pay" if de else "🚀 Get PRO Pass (5 €) – PayPal, Card & Apple Pay",
             STRIPE_LINK,
@@ -95,7 +95,7 @@ with tab1:
         orig_mb = len(orig_bytes) / (1024 * 1024)
         base_name = f.name.rsplit(".", 1)[0]
         new_filename = f"{base_name}_geschrumpft.pdf" if de else f"{base_name}_compressed.pdf"
-        md_filename = f"{base_name}_KI_Version.md" if de else f"{base_name}_AI_version.md"
+        md_filename = f"{base_name}_KI_Version.md" if de else f"{base_name}_AI_Version.md"
 
         col_left, col_right = st.columns([1, 1])
 
@@ -209,18 +209,10 @@ with tab1:
             )
 
             st.markdown(f"""
-            <div style="display: flex; align-items: center; justify-content: center; gap: 25px; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px;">
-                <div style="width: 110px; height: 110px; border-radius: 50%; background: conic-gradient(#e63946 {saved_pct * 3.6}deg, #e0e0e0 0deg); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <div style="width: 82px; height: 82px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;">
-                        <span style="font-size: 22px; font-weight: bold; color: #1d3557;">{saved_pct}%</span>
-                        <span style="font-size: 10px; color: #6c757d;">{lbl_saved}</span>
-                    </div>
-                </div>
-                <div style="font-size: 16px; color: #333;">
-                    {txt_smaller}<br>
-                    <span style="color: #666; font-size: 14px;">{orig_mb:.2f} MB ➔ <b>{new_mb:.2f} MB</b></span><br>
-                    <span style="color: #1d3557; font-size: 13px;">{txt_tip}</span>
-                </div>
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 15px; text-align: center; margin-top: 15px;">
+                <span style="background-color: #22c55e; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 0.85em;">{lbl_saved}: {saved_pct}%</span>
+                <p style="margin: 10px 0 5px 0; font-size: 1.1em; color: #166534;">{txt_smaller} ({orig_mb:.2f} MB ➔ {new_mb:.2f} MB)</p>
+                <p style="margin: 0; font-size: 0.95em; color: #15803d;">{txt_tip}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -259,13 +251,15 @@ with tab4:
                     else f"✅ Done! Reduced from **{orig_kb:.1f} KB** to **{new_kb:.1f} KB** of pure AI text."
                 )
                 st.download_button(
-                    f"⬇️ Download KI-Datei (.md) ({new_kb:.1f} KB)" if de else f"⬇️ Download AI file (.md) ({new_kb:.1f} KB)",
+                    f"⬇️ KI-Version herunterladen ({new_kb:.1f} KB)" if de else f"⬇️ Download AI version ({new_kb:.1f} KB)",
                     res_text,
-                    f"{base_md}_KI.md" if de else f"{base_md}_AI.md",
+                    f"{base_md}_KI_Version.md" if de else f"{base_md}_AI_Version.md",
                     mime="text/markdown",
                     type="primary",
                     use_container_width=True
                 )
+                with st.expander("🔍 Vorschau des KI-Textes ansehen" if de else "🔍 Preview AI text"):
+                    st.text_area("Inhalt" if de else "Content", res_text, height=200)
 
 # TAB 2: ZUSAMMENFÜGEN
 with tab2:
