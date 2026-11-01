@@ -10,8 +10,8 @@ st.set_page_config(page_title="PDFSchrumpf", page_icon="📉", layout="centered"
 # --- HIER DEINE BEZAHL-LINKS & PRO-CODE EINTRAGEN ---
 # =====================================================================
 PRO_CODE = "SCHRUMPF2026"
-STRIPE_LINK = "https://buy.stripe.com/DEIN_STRIPE_LINK"  # Später eintragen
-PAYPAL_LINK = "https://paypal.me/DEIN_PAYPAL_NAME/5"     # Später eintragen
+STRIPE_LINK = "https://buy.stripe.com/28E6oIdVGaeL5m8bd8awo00"  # Später eintragen
+
 
 # --- 1. CREDITS & ABO-LOGIK (Session State + Auto-Freischaltung per Link) ---
 if "credits" not in st.session_state:
@@ -49,11 +49,7 @@ with st.sidebar:
             type="primary",
             use_container_width=True
         )
-        st.link_button(
-            "🅿️ Mit PayPal zahlen (5 €)" if de else "🅿️ Pay with PayPal (5 €)",
-            PAYPAL_LINK,
-            use_container_width=True
-        )
+      
         
         st.markdown("---")
         # Lizenzschlüssel-Eingabe für bestehende Käufer
