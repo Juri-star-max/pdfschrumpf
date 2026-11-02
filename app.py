@@ -78,6 +78,29 @@ def use_credit():
     if not st.session_state.is_pro:
         st.session_state.credits -= 1
 
+def extract_ki_text(file_bytes, filename):
+    ext = os.path.splitext(filename)[1].lower()
+    # PDFs: Blitzschnell direkt im RAM über PyMuPDF (fitz)
+    if ext == ".pdf":
+        with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+            pages = []
+            for i, page in enumerate(doc, 1):
+                txt = page.get_text("text").strip()
+                if txt:
+                    pages.append(f"## Seite {i}\n\n{txt}" if de else f"## Page {i}\n\n{txt}")
+            return "\n\n".join(pages)
+    
+    # Word & Excel: Über MarkItDown mit sicherer Aufräum-Logik
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
+    try:
+        md = MarkItDown()
+        return md.convert(tmp_path).text_content
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
 # --- 3. HAUPTSEITE & TOOLS ---
 st.title("📉 PDFSchrumpf – Klein, schnell, fertig." if de else "📉 PDFSchrumpf – Small, fast, done.")
 tab1, tab4, tab2, tab3 = st.tabs([
@@ -133,6 +156,14 @@ with tab1:
 
                 doc = fitz.open(stream=orig_bytes, filetype="pdf")
 
+                # Gleichzeitig .md Version direkt im RAM aus dem geöffneten PDF ziehen (spart 100% Extra-Ladezeit)
+                pages_md = []
+                for i, page in enumerate(doc, 1):
+                    txt = page.get_text("text").strip()
+                    if txt:
+                        pages_md.append(f"## Seite {i}\n\n{txt}" if de else f"## Page {i}\n\n{txt}")
+                md_text = "\n\n".join(pages_md)
+
                 doc.scrub(
                     attached_files=True,
                     clean_pages=True,
@@ -165,14 +196,6 @@ with tab1:
 
                 if len(out_bytes) >= orig_size:
                     out_bytes = orig_bytes
-
-                # Gleichzeitig .md Version für KI erzeugen
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                    tmp.write(orig_bytes)
-                    tmp_path = tmp.name
-                md_converter = MarkItDown()
-                md_text = md_converter.convert(tmp_path).text_content
-                os.remove(tmp_path)
 
                 new_mb = len(out_bytes) / (1024 * 1024)
                 md_kb = len(md_text.encode("utf-8")) / 1024
@@ -238,29 +261,30 @@ with tab4:
         ):
             if check_limit():
                 with st.spinner("Extrahiere reinen KI-Text..." if de else "Extracting pure AI text..."):
-                    ext = os.path.splitext(f_md.name)[1]
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-                        tmp.write(f_md.getvalue())
-                        tmp_path = tmp.name
-                    md = MarkItDown()
-                    res_text = md.convert(tmp_path).text_content
-                    os.remove(tmp_path)
+                    res_text = extract_ki_text(f_md.getvalue(), f_md.name)
+
+                if not res_text.strip():
+                    st.error(
+                        "⚠️ Kein Text gefunden! Dieses Dokument besteht vermutlich nur aus gescannten Bildern ohne kopierbaren Text. Es wurde kein Versuch abgezogen." if de
+                        else "⚠️ No text found! This document likely contains scanned images only. No credit was used."
+                    )
+                else:
                     new_kb = len(res_text.encode("utf-8")) / 1024
                     use_credit()
-                st.success(
-                    f"✅ Fertig! Von **{orig_kb:.1f} KB** auf **{new_kb:.1f} KB** reinen KI-Text reduziert." if de
-                    else f"✅ Done! Reduced from **{orig_kb:.1f} KB** to **{new_kb:.1f} KB** of pure AI text."
-                )
-                st.download_button(
-                    f"⬇️ KI-Version herunterladen ({new_kb:.1f} KB)" if de else f"⬇️ Download AI version ({new_kb:.1f} KB)",
-                    res_text,
-                    f"{base_md}_KI_Version.md" if de else f"{base_md}_AI_Version.md",
-                    mime="text/markdown",
-                    type="primary",
-                    use_container_width=True
-                )
-                with st.expander("🔍 Vorschau des KI-Textes ansehen" if de else "🔍 Preview AI text"):
-                    st.text_area("Inhalt" if de else "Content", res_text, height=200)
+                    st.success(
+                        f"✅ Fertig! Von **{orig_kb:.1f} KB** auf **{new_kb:.1f} KB** reinen KI-Text reduziert." if de
+                        else f"✅ Done! Reduced from **{orig_kb:.1f} KB** to **{new_kb:.1f} KB** of pure AI text."
+                    )
+                    st.download_button(
+                        f"⬇️ KI-Version herunterladen ({new_kb:.1f} KB)" if de else f"⬇️ Download AI version ({new_kb:.1f} KB)",
+                        res_text,
+                        f"{base_md}_KI_Version.md" if de else f"{base_md}_AI_Version.md",
+                        mime="text/markdown",
+                        type="primary",
+                        use_container_width=True
+                    )
+                    with st.expander("🔍 Vorschau des KI-Textes ansehen" if de else "🔍 Preview AI text"):
+                        st.text_area("Inhalt" if de else "Content", res_text[:10000], height=200)
 
 # TAB 2: ZUSAMMENFÜGEN
 with tab2:
